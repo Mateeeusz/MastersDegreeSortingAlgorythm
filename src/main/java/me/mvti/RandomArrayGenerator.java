@@ -1,4 +1,4 @@
-package org.example;
+package me.mvti;
 
 import java.util.Random;
 
