@@ -1,16 +1,25 @@
 package me.mvti;
 
+import me.mvti.Algorithms.IntroSort;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
+
+import static me.mvti.Algorithms.IntroSort.introSort;
+import static me.mvti.Algorithms.TimSort.timSort;
 
 public class RandomArrayGenerator {
 
-    private Random random;
+    private static Random random;
 
     public RandomArrayGenerator() {
         this.random = new Random();
     }
 
-    public int[] generateAndShuffle(int length, int minValue, int maxValue, int shuffleType) {
+    public static int[] generateAndShuffle(int length, int minValue, int maxValue, int shuffleType) {
         if (length <= 0) {
             throw new IllegalArgumentException("Length must be greater than 0.");
         }
@@ -18,13 +27,11 @@ public class RandomArrayGenerator {
             throw new IllegalArgumentException("minValue must be less than maxValue.");
         }
 
-        // Generowanie liczb losowych
         int[] randomArray = new int[length];
         for (int i = 0; i < length; i++) {
             randomArray[i] = random.nextInt(maxValue - minValue + 1) + minValue;
         }
 
-        // Wybór metody mieszania
         if (shuffleType == 1) {
             shuffleUsingJava(randomArray);
         } else if (shuffleType == 2) {
@@ -36,8 +43,7 @@ public class RandomArrayGenerator {
         return randomArray;
     }
 
-    private void shuffleUsingJava(int[] array) {
-        // Użycie wbudowanego shuffle
+    private static void shuffleUsingJava(int[] array) {
         for (int i = array.length - 1; i > 0; i--) {
             int j = random.nextInt(i + 1);
             int temp = array[i];
@@ -46,10 +52,9 @@ public class RandomArrayGenerator {
         }
     }
 
-    private void shuffleCustom(int[] array) {
-        // Własnoręczne mieszanie tablicy (Fisher-Yates Shuffle)
+    private static void shuffleCustom(int[] array) {
         for (int i = array.length - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1); // Losowanie indeksu od 0 do i
+            int j = random.nextInt(i + 1);
             int temp = array[i];
             array[i] = array[j];
             array[j] = temp;
@@ -59,18 +64,59 @@ public class RandomArrayGenerator {
     public static void main(String[] args) {
         RandomArrayGenerator generator = new RandomArrayGenerator();
 
-        // Przykładowe użycie z shuffle Javy
-        int[] resultJava = generator.generateAndShuffle(10, 1, 100, 1);
-        System.out.println("Shuffle Java:");
-        for (int value : resultJava) {
-            System.out.print(value + " ");
-        }
+        int[] list = generator.generateAndShuffle(1000000000, -1_000_000, 1_000_000_000, 1);
 
-        // Przykładowe użycie z autorskim shuffle
-        int[] resultCustom = generator.generateAndShuffle(10, 1, 100, 2);
-        System.out.println("\nShuffle Custom:");
-        for (int value : resultCustom) {
-            System.out.print(value + " ");
+        try {
+            String baseFileName = "IntroSort";
+            String beforeFileName = "Before_" + baseFileName + ".txt";
+            String afterFileName = "After_" + baseFileName + ".txt";
+            String statsFileName = "Statistics_" + baseFileName + ".txt";
+
+            // Zapis tablicy przed sortowaniem
+            saveArrayToFile(list, beforeFileName);
+            System.out.println("Zapisano plik: " + beforeFileName);
+
+            System.out.println("Przed sortowaniem: " + Arrays.toString(Arrays.copyOf(list, 100)) + "...");
+
+            Runtime runtime = Runtime.getRuntime();
+            runtime.gc();
+            long startTime = System.nanoTime();
+            long usedMemoryBefore = runtime.totalMemory() - runtime.freeMemory();
+
+            //timSort(list);
+
+            introSort(list);
+
+            long elapsedTime = System.nanoTime() - startTime;
+            long usedMemoryAfter = runtime.totalMemory() - runtime.freeMemory();
+
+            System.out.println("Po sortowaniu: " + Arrays.toString(Arrays.copyOf(list, 100)) + "...");
+
+            saveArrayToFile(list, afterFileName);
+            System.out.println("Zapisano plik: " + afterFileName);
+
+            saveStatisticsToFile(statsFileName, elapsedTime, usedMemoryBefore, usedMemoryAfter);
+            System.out.println("Zapisano statystyki: " + statsFileName);
+        } catch (IOException e) {
+            System.err.println("Błąd podczas zapisywania pliku: " + e.getMessage());
+        }
+    }
+
+    private static void saveArrayToFile(int[] array, String fileName) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            for (int num : array) {
+                writer.write(num + "\n");
+            }
+        }
+    }
+
+    private static void saveStatisticsToFile(String fileName, long elapsedTime, long usedMemoryBefore, long usedMemoryAfter) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            writer.write("=== Statystyki działania algorytmu ===\n");
+            writer.write(String.format("Czas działania: %.6f sekund\n", elapsedTime / 1_000_000_000.0));
+            writer.write(String.format("Zużycie pamięci przed sortowaniem: %.2f MB\n", usedMemoryBefore / (1024.0 * 1024.0)));
+            writer.write(String.format("Zużycie pamięci po sortowaniu: %.2f MB\n", usedMemoryAfter / (1024.0 * 1024.0)));
+            writer.write(String.format("Różnica w zużyciu pamięci: %.2f MB\n", (usedMemoryAfter - usedMemoryBefore) / (1024.0 * 1024.0)));
         }
     }
 }

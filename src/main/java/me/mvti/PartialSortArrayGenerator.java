@@ -22,16 +22,13 @@ public class PartialSortArrayGenerator {
             throw new IllegalArgumentException("sortPercentage must be between 0.0 and 1.0.");
         }
 
-        // Generowanie liczb losowych
         int[] randomArray = new int[length];
         for (int i = 0; i < length; i++) {
             randomArray[i] = random.nextInt(maxValue - minValue + 1) + minValue;
         }
 
-        // Obliczanie liczby elementów do posortowania
         int elementsToSort = (int) (length * sortPercentage);
 
-        // Sortowanie wymaganej części tablicy
         Arrays.sort(randomArray, 0, elementsToSort);
 
         return randomArray;
